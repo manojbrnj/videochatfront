@@ -11,6 +11,8 @@ const socket = io('https://video-chat-6rs1.onrender.com', {
 function Home() {
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [roomId, setRoomId] = useState('');
+  const [myRoomId, setMyRoomId] = useState('');
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
@@ -57,17 +59,34 @@ function Home() {
     socket.on('ice-candidate', (candidate) => {
       peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
     });
+
+    socket.on('room-created', (id) => {
+      setMyRoomId(id);
+    });
+
+    socket.emit('create-room');
   }, []);
 
   const handleCall = async () => {
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
-    socket.emit('offer', offer);
+    socket.emit('offer', {offer, roomId});
+  };
+
+  const handleRoomIdChange = (event) => {
+    setRoomId(event.target.value);
   };
 
   return (
     <div>
-      <button onClick={handleCall}>Call</button>
+      <div>Your Room ID: {myRoomId}</div>
+      <input
+        type='text'
+        value={roomId}
+        onChange={handleRoomIdChange}
+        placeholder='Enter Room ID to call'
+      />
+      <button onClick={handleCall}>Make Call</button>
       <video ref={localVideoRef} autoPlay muted></video>
       <video ref={remoteVideoRef} autoPlay></video>
     </div>
