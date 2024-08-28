@@ -1,0 +1,27 @@
+{
+  "name": "game-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "axios": "^1.7.5",
+    "flowbite": "^2.5.1",
+    "flowbite-react": "^0.10.1",
+    "next": "14.2.7",
+    "react": "^18",
+    "react-dom": "^18",
+    "socket.io-client": "^4.7.5",
+    "sweetalert2": "^11.12.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.4.2"
+  }
+}
