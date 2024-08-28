@@ -72,11 +72,34 @@ function Home() {
     await peerConnectionRef.current.setLocalDescription(offer);
     socket.emit('offer', {offer, roomId});
   };
+  socket.on('callReceived', (data) => {
+    const {from, roomId} = data;
+    if (confirm(`Incoming call from ${from}. Accept?`)) {
+      socket.emit('callAccepted', {to: from, roomId});
+      joinRoom(roomId);
+    }
+  });
 
+  socket.on('callConnected', (data) => {
+    const {roomId} = data;
+    joinRoom(roomId);
+  });
   const handleRoomIdChange = (event) => {
     setRoomId(event.target.value);
   };
-
+  function joinRoom(roomId) {
+    // Implement your video chat logic here
+    console.log(`Joined room: ${roomId}`);
+  }
+  function makeCall() {
+    const targetRoomId = document.getElementById('targetRoomId').value;
+    if (targetRoomId) {
+      socket.emit('makeCall', targetRoomId);
+      console.log(`Calling peer with room ID: ${targetRoomId}`);
+    } else {
+      alert('Please enter a valid Room ID');
+    }
+  }
   return (
     <div>
       <div>Your Room ID: {myRoomId}</div>
@@ -86,7 +109,7 @@ function Home() {
         onChange={handleRoomIdChange}
         placeholder='Enter Room ID to call'
       />
-      <button onClick={handleCall}>Make Call</button>
+      <button onclick='makeCall()'>Make Call</button>
       <video ref={localVideoRef} autoPlay muted></video>
       <video ref={remoteVideoRef} autoPlay></video>
     </div>
