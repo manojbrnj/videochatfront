@@ -3,17 +3,18 @@
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap');
 @import 'flowbite/dist/flowbite.css';
+
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 0, 0, 0; /* Default to light mode foreground */
+  --background-start-rgb: 214, 219, 220; /* Default to light mode background start */
+  --background-end-rgb: 255, 255, 255; /* Default to light mode background end */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --foreground-rgb: 255, 255, 255; /* Dark mode foreground */
+    --background-start-rgb: 0, 0, 0; /* Dark mode background start */
+    --background-end-rgb: 0, 0, 0; /* Dark mode background end */
   }
 }
 
@@ -24,6 +25,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  color: rgb(var(--foreground-rgb)); /* Set text color based on theme */
 }
 
 @layer utilities {
