@@ -3,7 +3,11 @@
 import React, {useEffect, useRef, useState} from 'react';
 import io from 'socket.io-client';
 
-const socket = io('https://video-chat-6rs1.onrender.com');
+const socket = io('https://video-chat-6rs1.onrender.com', {
+  transports: ['websocket', 'polling'],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 function Home() {
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
