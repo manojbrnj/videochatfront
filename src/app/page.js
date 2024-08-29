@@ -36,6 +36,9 @@ function Home() {
   const getMicAndCamera = async () => {
     try {
       let stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
       console.log(stream);
     } catch (error) {
       ShowError(error);
@@ -88,6 +91,7 @@ function Home() {
       >
         Make Call
       </button>
+      <video ref={localVideoRef} autoPlay playsInline />
     </div>
   );
 }
