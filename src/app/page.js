@@ -3,6 +3,8 @@
 import React, {useEffect, useRef, useState} from 'react';
 import io from 'socket.io-client';
 import {Button} from 'flowbite-react';
+import {s} from 'vite/dist/node/types.d-aGj9QkWt';
+import Swal from 'sweetalert2';
 
 const socket = io('https://video-chat-6rs1.onrender.com', {
   transports: ['websocket', 'polling'],
@@ -23,9 +25,21 @@ function Home() {
     audio: true,
     video: true,
   };
-
-  const getMicAndCamera = () => {
-    let stream = navigator.mediaDevices.getUserMedia(constraints);
+  const ShowError = (error) => {
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: 'Failed to access microphone and camera!',
+      footer: error.message,
+    });
+  };
+  const getMicAndCamera = async () => {
+    try {
+      let stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log(stream);
+    } catch (error) {
+      ShowError(error);
+    }
   };
 
   return (
