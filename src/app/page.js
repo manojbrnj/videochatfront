@@ -2,6 +2,7 @@
 'use client';
 import React, {useEffect, useRef, useState} from 'react';
 import io from 'socket.io-client';
+import {Button} from 'flowbite-react';
 
 const socket = io('https://video-chat-6rs1.onrender.com', {
   transports: ['websocket', 'polling'],
@@ -18,114 +19,61 @@ function Home() {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
 
-  useEffect(() => {
-    const constraints = {
-      audio: true,
-      video: true,
-    };
-
-    navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-      localVideoRef.current.srcObject = stream;
-      setLocalStream(stream);
-    });
-
-    peerConnectionRef.current = new RTCPeerConnection();
-
-    peerConnectionRef.current.ontrack = (event) => {
-      setRemoteStream(event.streams[0]);
-      remoteVideoRef.current.srcObject = event.streams[0];
-    };
-
-    peerConnectionRef.current.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit('ice-candidate', event.candidate);
-      }
-    };
-
-    socket.on('offer', async (offer) => {
-      await peerConnectionRef.current.setRemoteDescription(
-        new RTCSessionDescription(offer),
-      );
-      const answer = await peerConnectionRef.current.createAnswer();
-      await peerConnectionRef.current.setLocalDescription(answer);
-      socket.emit('answer', answer);
-    });
-
-    socket.on('answer', async (answer) => {
-      await peerConnectionRef.current.setRemoteDescription(
-        new RTCSessionDescription(answer),
-      );
-    });
-
-    socket.on('ice-candidate', (candidate) => {
-      peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-
-    socket.on('room-created', (id) => {
-      setMyRoomId(id);
-    });
-
-    socket.emit('create-room');
-
-    // Clean up on component unmount
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  const handleCall = async () => {
-    const offer = await peerConnectionRef.current.createOffer();
-    await peerConnectionRef.current.setLocalDescription(offer);
-    socket.emit('offer', {offer, roomId});
+  const constraints = {
+    audio: true,
+    video: true,
   };
 
-  useEffect(() => {
-    socket.on('callReceived', (data) => {
-      const {from, roomId} = data;
-      if (window.confirm(`Incoming call from ${from}. Accept?`)) {
-        socket.emit('callAccepted', {to: from, roomId});
-        joinRoom(roomId);
-      }
-    });
-
-    socket.on('callConnected', (data) => {
-      const {roomId} = data;
-      joinRoom(roomId);
-    });
-  }, []);
-
-  const handleRoomIdChange = (event) => {
-    setRoomId(event.target.value);
-  };
-
-  const joinRoom = (roomId) => {
-    // Implement your video chat logic here
-    console.log(`Joined room: ${roomId}`);
-  };
-
-  const makeCall = () => {
-    const targetRoomId = document.getElementById('targetRoomId').value;
-    if (targetRoomId) {
-      socket.emit('makeCall', targetRoomId);
-      console.log(`Calling peer with room ID: ${targetRoomId}`);
-    } else {
-      alert('Please enter a valid Room ID');
-    }
+  const getMicAndCamera = () => {
+    let stream = navigator.mediaDevices.getUserMedia(constraints);
   };
 
   return (
     <div>
-      <div>Your Room ID: {myRoomId}</div>
-      <input
-        type='text'
-        id='targetRoomId'
-        value={roomId}
-        onChange={handleRoomIdChange}
-        placeholder='Enter Room ID to call'
-      />
-      <button onClick={makeCall}>Make Call</button>
-      <video ref={localVideoRef} autoPlay muted></video>
-      <video ref={remoteVideoRef} autoPlay></video>
+      {/* Add hero section here */}
+      <section className='bg-gray-900 text-white'>
+        <div className='py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12'>
+          <h1 className='mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl'>
+            Welcome to Our Awesome Game
+          </h1>
+          <p className='mb-8 text-lg font-normal text-gray-400 lg:text-xl sm:px-16 xl:px-48'>
+            Get ready for an epic gaming experience! Challenge your friends,
+            beat high scores, and become the ultimate champion.
+          </p>
+          <div className='flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4'>
+            <a
+              href='#'
+              className='inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900'
+            >
+              Start Playing
+              <svg
+                className='ml-2 -mr-1 w-5 h-5'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z'
+                  clipRule='evenodd'
+                ></path>
+              </svg>
+            </a>
+            <a
+              href='#'
+              className='inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg border border-white hover:bg-gray-100 hover:text-gray-900 focus:ring-4 focus:ring-gray-400'
+            >
+              Learn More
+            </a>
+          </div>
+        </div>
+      </section>
+      <button
+        onClick={getMicAndCamera}
+        className='bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:scale-105'
+      >
+        Make Call
+      </button>
     </div>
   );
 }
