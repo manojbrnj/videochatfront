@@ -39,6 +39,7 @@ function Home() {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
+      setLocalStream(stream);
       console.log(stream);
     } catch (error) {
       ShowError(error);
@@ -91,7 +92,8 @@ function Home() {
       >
         Make Call
       </button>
-      <video ref={localVideoRef} autoPlay playsInline />
+
+      <video ref={localVideoRef} autoPlay playsInline muted />
     </div>
   );
 }
