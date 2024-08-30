@@ -1,7 +1,7 @@
 import {useState, useEffect, useRef} from 'react';
 import {Select} from 'flowbite-react';
 import io from 'socket.io-client';
-function VideoDeviceSelector() {
+function VideoDeviceSelector({stream}) {
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
   const peerConnection = useRef(null);
@@ -19,7 +19,9 @@ function VideoDeviceSelector() {
         },
       ],
     });
-
+    stream.getTracks().forEach((track) => {
+      peerConnection.current.addTrack(track, stream);
+    });
     peerConnection.current
       .createOffer()
       .then((offer) => peerConnection.current.setLocalDescription(offer))

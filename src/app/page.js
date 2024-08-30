@@ -128,7 +128,7 @@ function Home() {
       </Button>
       <ScreenShare stream={streamShare} />
       <GetDevices />
-      <VideoDeviceSelector />
+      <VideoDeviceSelector stream={stream} />
     </div>
   );
 }
