@@ -12,6 +12,17 @@ function VideoDeviceSelector() {
     peerConnection.current = new RTCPeerConnection({
       iceServers: [{urls: 'stun:stun.l.google.com:19302'}],
     });
+
+    peerConnection.current
+      .createOffer()
+      .then((offer) => peerConnection.current.setLocalDescription(offer))
+      .then(() => {
+        socketRef.current.emit(
+          'offer',
+          peerConnection.current.localDescription,
+        );
+      })
+      .catch((error) => console.error('Error creating offer:', error));
     // Set up event listeners for RTCPeerConnection
     peerConnection.current.onicecandidate = handleICECandidate;
     peerConnection.current.ontrack = handleTrack;
@@ -47,6 +58,19 @@ function VideoDeviceSelector() {
     }
   };
 
+  const handleOffer = (offer) => {
+    peerConnection.current
+      .setRemoteDescription(new RTCSessionDescription(offer))
+      .then(() => peerConnection.current.createAnswer())
+      .then((answer) => peerConnection.current.setLocalDescription(answer))
+      .then(() => {
+        socketRef.current.emit(
+          'answer',
+          peerConnection.current.localDescription,
+        );
+      })
+      .catch((error) => console.error('Error handling offer:', error));
+  };
   const handleTrack = (event) => {
     // Handle incoming tracks
   };
@@ -74,16 +98,6 @@ function VideoDeviceSelector() {
           peerConnection.current.addTrack(track, stream);
         });
 
-        peerConnection.current
-          .createOffer()
-          .then((offer) => peerConnection.current.setLocalDescription(offer))
-          .then(() => {
-            socketRef.current.emit(
-              'offer',
-              peerConnection.current.localDescription,
-            );
-          })
-          .catch((error) => console.error('Error creating offer:', error));
         // Here you can handle the new stream, e.g., set it to a video element
       });
   };
