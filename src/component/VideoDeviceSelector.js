@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef} from 'react';
 import {Select} from 'flowbite-react';
-
+import io from 'socket.io-client';
 function VideoDeviceSelector() {
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
