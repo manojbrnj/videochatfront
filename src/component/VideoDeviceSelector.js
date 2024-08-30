@@ -4,8 +4,17 @@ import {Select} from 'flowbite-react';
 function VideoDeviceSelector() {
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
-
+  const peerConnection = useRef(null);
+  const socketRef = useRef(null);
   useEffect(() => {
+    socketRef.current = io('https://video-chat-6rs1.onrender.com');
+    // Initialize RTCPeerConnection
+    peerConnection.current = new RTCPeerConnection({
+      iceServers: [{urls: 'stun:stun.l.google.com:19302'}],
+    });
+    // Set up event listeners for RTCPeerConnection
+    peerConnection.current.onicecandidate = handleICECandidate;
+    peerConnection.current.ontrack = handleTrack;
     navigator.mediaDevices
       .enumerateDevices()
       .then((deviceList) => {
@@ -18,8 +27,40 @@ function VideoDeviceSelector() {
         }
       })
       .catch((error) => console.error('Error enumerating devices:', error));
-  }, []);
 
+    // Set up socket event listeners
+    socketRef.current.on('offer', handleOffer);
+    socketRef.current.on('answer', handleAnswer);
+    socketRef.current.on('ice-candidate', handleNewICECandidate);
+    return () => {
+      if (peerConnection.current) {
+        peerConnection.current.close();
+      }
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+  const handleICECandidate = (event) => {
+    if (event.candidate) {
+      socketRef.current.emit('ice-candidate', event.candidate);
+    }
+  };
+
+  const handleTrack = (event) => {
+    // Handle incoming tracks
+  };
+
+  const handleAnswer = (answer) => {
+    peerConnection.current
+      .setRemoteDescription(new RTCSessionDescription(answer))
+      .catch((error) => console.error('Error handling answer:', error));
+  };
+  const handleNewICECandidate = (candidate) => {
+    peerConnection.current
+      .addIceCandidate(new RTCIceCandidate(candidate))
+      .catch((error) => console.error('Error adding ICE candidate:', error));
+  };
   const changeVideoInput = (deviceId) => {
     navigator.mediaDevices
       .getUserMedia({
@@ -29,6 +70,20 @@ function VideoDeviceSelector() {
       })
       .then((stream) => {
         console.log(stream);
+        stream.getTracks().forEach((track) => {
+          peerConnection.current.addTrack(track, stream);
+        });
+
+        peerConnection.current
+          .createOffer()
+          .then((offer) => peerConnection.current.setLocalDescription(offer))
+          .then(() => {
+            socketRef.current.emit(
+              'offer',
+              peerConnection.current.localDescription,
+            );
+          })
+          .catch((error) => console.error('Error creating offer:', error));
         // Here you can handle the new stream, e.g., set it to a video element
       });
   };
