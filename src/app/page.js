@@ -11,6 +11,7 @@ import GetDevices from '@/component/GetDevices';
 import VideoDeviceSelector from '@/component/VideoDeviceSelector';
 
 function Home() {
+  const socket = io.connect('http://localhost:5000');
   const constraints = {
     video: true,
     audio: true,
@@ -18,6 +19,7 @@ function Home() {
   const [stream, setStream] = useState(null);
   const [streamShare, sestStreamShare] = useState(null);
   const localVideoRef = useRef(null);
+  const localVideoRef2 = useRef(null);
   useEffect(() => {
     // StartStream();
     return () => {
@@ -105,6 +107,15 @@ function Home() {
         <div className='w-full max-w-2xl p-4 bg-white rounded-lg shadow-lg'>
           <video
             ref={localVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className='w-full h-[480px] object-cover border-8 border-blue-500 rounded-md shadow-inner'
+          />
+        </div>
+        <div className='w-full max-w-2xl p-4 bg-white rounded-lg shadow-lg'>
+          <video
+            ref={localVideoRef2}
             autoPlay
             muted
             playsInline
