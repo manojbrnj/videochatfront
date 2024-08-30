@@ -12,6 +12,7 @@ import VideoDeviceSelector from '@/component/VideoDeviceSelector';
 
 function Home() {
   const socket = io.connect('https://video-chat-6rs1.onrender.com');
+  console.log(socket);
   const constraints = {
     video: true,
     audio: true,
