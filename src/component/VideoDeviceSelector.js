@@ -24,7 +24,10 @@ function VideoDeviceSelector({stream}) {
     });
     peerConnection.current
       .createOffer()
-      .then((offer) => peerConnection.current.setLocalDescription(offer))
+      .then((offer) => {
+        peerConnection.current.setLocalDescription(offer);
+        console.log('Offer created:', offer);
+      })
       .then(() => {
         socketRef.current.emit(
           'offer',
