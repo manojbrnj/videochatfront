@@ -4,83 +4,121 @@ import io from 'socket.io-client';
 import Swal from 'sweetalert2';
 import * as tf from '@tensorflow/tfjs';
 import * as bodyPix from '@tensorflow-models/body-pix';
-
-const socket = io('https://video-chat-6rs1.onrender.com', {
-  transports: ['websocket', 'polling'],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-});
+import {Button, Container} from 'flowbite-react';
+import ScreenRecorder from '@/component/ScreenRecorder';
+import ScreenShare from '@/component/ScreenShare';
+import GetDevices from '@/component/GetDevices';
+import VideoDeviceSelector from '@/component/VideoDeviceSelector';
 
 function Home() {
-  // ... (previous state and ref declarations)
-  const [backgroundImage, setBackgroundImage] = useState(
-    '/default-background.jpg',
-  );
-  const canvasRef = useRef(null);
-
   const constraints = {
-    audio: true,
     video: true,
+    audio: true,
   };
+  const [stream, setStream] = useState(null);
+  const [streamShare, sestStreamShare] = useState(null);
+  const localVideoRef = useRef(null);
+  useEffect(() => {
+    // StartStream();
+    return () => {
+      // setStream(null);
+    };
+  }, [stream]);
 
-  const getMicAndCamera = async () => {
+  const StartStream = async () => {
     try {
-      let stream = await navigator.mediaDevices.getUserMedia(constraints);
-      setLocalStream(stream);
+      let mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      setStream(mediaStream);
+      let height = localVideoRef.current.height;
+      let width = localVideoRef.current.width;
+
+      mediaStream.getTracks().forEach((track) => {
+        const constraints = {
+          height:
+            height < mediaStream.getVideoTracks()[0].getSettings().height
+              ? mediaStream.getVideoTracks()[0].getSettings().height
+              : height,
+          width:
+            width < mediaStream.getVideoTracks()[0].getSettings().width
+              ? mediaStream.getVideoTracks()[0].getSettings().width
+              : width,
+        };
+        track.applyConstraints(constraints);
+      });
       if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-        startBackgroundChange();
+        localVideoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
       Swal.fire({
         icon: 'error',
         title: 'Oops...',
-        text: 'Failed to access microphone and camera!',
-        footer: error.message,
+        text: 'Something went wrong!',
       });
     }
   };
 
-  const startBackgroundChange = async () => {
-    const net = await bodyPix.load();
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.src = backgroundImage;
-
-    const segmentPerson = async () => {
-      const segmentation = await net.segmentPerson(localVideoRef.current);
-      const backgroundMask = bodyPix.toMask(segmentation);
-
-      ctx.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.drawImage(backgroundMask, 0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = 'destination-over';
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      requestAnimationFrame(segmentPerson);
-    };
-
-    segmentPerson();
+  const StopStream = () => {
+    stream.getTracks().forEach((track) => track.stop());
+    setStream(null);
+  };
+  // Screen Share
+  const StartScreenShare = async () => {
+    await navigator.mediaDevices
+      .getDisplayMedia({
+        video: true,
+        audio: true,
+      })
+      .then((stream) => {
+        sestStreamShare(stream);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        console.log('Stream:', stream);
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Failed ScreenShare!',
+        });
+      });
   };
 
   return (
     <div>
-      <button onClick={getMicAndCamera}>Make Call</button>
-      <video
-        ref={localVideoRef}
-        autoPlay
-        muted
-        playsInline
-        style={{display: 'none'}}
-      />
-      <canvas ref={canvasRef} width='640' height='480' />
-      <input
-        type='file'
-        onChange={(e) =>
-          setBackgroundImage(URL.createObjectURL(e.target.files[0]))
-        }
-      />
+      <div className='flex justify-center items-center gap-2 md:gap-10 sm:gap-3 md:text-sm flex-col sm:flex-row   mt-4'>
+        <Button gradientDuoTone='cyanToBlue' onClick={StartStream}>
+          Make Call
+        </Button>
+        <Button
+          gradientDuoTone='cyanToBlue'
+          disabled={!stream}
+          onClick={StopStream}
+          className={!stream ? 'opacity-50 cursor-not-allowed' : ''}
+        >
+          End Call
+        </Button>
+        <Button gradientDuoTone='cyanToBlue'>Change Screen Size</Button>
+      </div>
+      <div className='w-full   flex justify-center mt-4'>
+        <div className='w-full max-w-2xl p-4 bg-white rounded-lg shadow-lg'>
+          <video
+            ref={localVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className='w-full h-[480px] object-cover border-8 border-blue-500 rounded-md shadow-inner'
+          />
+        </div>
+      </div>
+      <ScreenRecorder stream={stream} />
+      <Button gradientDuoTone='cyanToBlue' onClick={StartScreenShare}>
+        Share Screen
+      </Button>
+      <ScreenShare stream={streamShare} />
+      <GetDevices />
+      <VideoDeviceSelector />
     </div>
   );
 }
