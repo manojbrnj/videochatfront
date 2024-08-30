@@ -11,10 +11,6 @@ import GetDevices from '@/component/GetDevices';
 import VideoDeviceSelector from '@/component/VideoDeviceSelector';
 
 function Home() {
-  useEffect(() => {
-    //const socket = io.connect('https://video-chat-6rs1.onrender.com');
-  }, []);
-
   const constraints = {
     video: true,
     audio: true,

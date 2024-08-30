@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {Select} from 'flowbite-react';
 
 function VideoDeviceSelector() {
