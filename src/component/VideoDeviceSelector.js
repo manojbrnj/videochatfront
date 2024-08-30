@@ -63,7 +63,7 @@ function VideoDeviceSelector({stream}) {
         socketRef.current.disconnect();
       }
     };
-  }, []);
+  }, [stream]);
   const handleICECandidate = (event) => {
     if (event.candidate) {
       socketRef.current.emit('ice-candidate', event.candidate);
