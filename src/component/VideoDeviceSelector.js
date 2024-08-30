@@ -6,11 +6,18 @@ function VideoDeviceSelector() {
   const [selectedDevice, setSelectedDevice] = useState('');
   const peerConnection = useRef(null);
   const socketRef = useRef(null);
-  useEffect(() => {
+  useEffect(async () => {
     socketRef.current = io('https://video-chat-6rs1.onrender.com');
     // Initialize RTCPeerConnection
-    peerConnection.current = new RTCPeerConnection({
-      iceServers: [{urls: 'stun:stun.l.google.com:19302'}],
+    peerConnection.current = await new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: [
+            'stun:stun.l.google.com:19302',
+            'stun:stun1.l.google.com:19302',
+          ],
+        },
+      ],
     });
 
     peerConnection.current
