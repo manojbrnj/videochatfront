@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, useCallback} from 'react';
 import {Button, Select} from 'flowbite-react';
 import io from 'socket.io-client';
 
@@ -29,18 +29,7 @@ function VideoDeviceSelector({stream, setStream}) {
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
 
-    navigator.mediaDevices
-      .enumerateDevices()
-      .then((deviceList) => {
-        const videoDevices = deviceList.filter(
-          (device) => device.kind === 'videoinput',
-        );
-        setDevices(videoDevices);
-        if (videoDevices.length > 0) {
-          setSelectedDevice(videoDevices[0].deviceId);
-        }
-      })
-      .catch((error) => console.error('Error enumerating devices:', error));
+    enumerateDevices();
 
     return () => {
       if (peerConnection.current) {
@@ -52,22 +41,41 @@ function VideoDeviceSelector({stream, setStream}) {
     };
   }, []);
 
+  const enumerateDevices = useCallback(async () => {
+    try {
+      const deviceList = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = deviceList.filter(
+        (device) => device.kind === 'videoinput',
+      );
+      setDevices(videoDevices);
+      if (videoDevices.length > 0) {
+        setSelectedDevice(videoDevices[0].deviceId);
+      }
+    } catch (error) {
+      console.error('Error enumerating devices:', error);
+    }
+  }, []);
+
   const changeVideoInput = async (deviceId) => {
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
     }
 
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        deviceId: deviceId,
-      },
-    });
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {deviceId: deviceId},
+      });
 
-    setStream(newStream);
+      setStream(newStream);
+      newStream.getTracks().forEach((track) => {
+        peerConnection.current.addTrack(track, newStream);
+      });
 
-    newStream.getTracks().forEach((track) => {
-      peerConnection.current.addTrack(track, newStream);
-    });
+      // Update selected device
+      setSelectedDevice(deviceId);
+    } catch (error) {
+      console.error('Error changing video input:', error);
+    }
   };
 
   const handleICECandidate = (event) => {
@@ -78,7 +86,6 @@ function VideoDeviceSelector({stream, setStream}) {
 
   const handleDeviceChange = (event) => {
     const deviceId = event.target.value;
-    setSelectedDevice(deviceId);
     changeVideoInput(deviceId);
   };
 
@@ -106,7 +113,11 @@ function VideoDeviceSelector({stream, setStream}) {
   };
 
   const handleTrack = (event) => {
-    // Handle incoming tracks
+    // Here you can attach the incoming video track to a video element to show the stream
+    const remoteVideoElement = document.getElementById('remoteVideo');
+    if (remoteVideoElement) {
+      remoteVideoElement.srcObject = event.streams[0];
+    }
   };
 
   const handleAnswer = async (answer) => {
@@ -140,6 +151,11 @@ function VideoDeviceSelector({stream, setStream}) {
           </option>
         ))}
       </Select>
+      <video
+        id='remoteVideo'
+        autoPlay
+        style={{width: '100%', height: 'auto'}}
+      />
     </div>
   );
 }
