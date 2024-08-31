@@ -2,9 +2,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import io from 'socket.io-client';
 import Swal from 'sweetalert2';
-import * as tf from '@tensorflow/tfjs';
-import * as bodyPix from '@tensorflow-models/body-pix';
-import {Button, Container} from 'flowbite-react';
+import {Button} from 'flowbite-react';
 import ScreenRecorder from '@/component/ScreenRecorder';
 import ScreenShare from '@/component/ScreenShare';
 import GetDevices from '@/component/GetDevices';
@@ -16,37 +14,17 @@ function Home() {
     audio: true,
   };
   const [stream, setStream] = useState(null);
-  const [streamShare, sestStreamShare] = useState(null);
+  const [streamShare, setStreamShare] = useState(null);
   const localVideoRef = useRef(null);
   const localVideoRef2 = useRef(null);
-  useEffect(() => {
-    // StartStream();
-    return () => {
-      // setStream(null);
-    };
-  }, [stream]);
 
   const StartStream = async () => {
     try {
-      let mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-
+      const mediaStream = await navigator.mediaDevices.getUserMedia(
+        constraints,
+      );
       setStream(mediaStream);
-      let height = localVideoRef.current.height;
-      let width = localVideoRef.current.width;
 
-      mediaStream.getTracks().forEach((track) => {
-        const constraints = {
-          height:
-            height < mediaStream.getVideoTracks()[0].getSettings().height
-              ? mediaStream.getVideoTracks()[0].getSettings().height
-              : height,
-          width:
-            width < mediaStream.getVideoTracks()[0].getSettings().width
-              ? mediaStream.getVideoTracks()[0].getSettings().width
-              : width,
-        };
-        track.applyConstraints(constraints);
-      });
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = mediaStream;
       }
@@ -60,35 +38,35 @@ function Home() {
   };
 
   const StopStream = () => {
-    stream.getTracks().forEach((track) => track.stop());
-    setStream(null);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
   };
-  // Screen Share
+
   const StartScreenShare = async () => {
-    await navigator.mediaDevices
-      .getDisplayMedia({
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: true,
-      })
-      .then((stream) => {
-        sestStreamShare(stream);
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-        console.log('Stream:', stream);
-      })
-      .catch((error) => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: 'Failed ScreenShare!',
-        });
       });
+      setStreamShare(screenStream);
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = screenStream;
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Failed ScreenShare!',
+      });
+    }
   };
 
   return (
     <div>
-      <div className='flex justify-center items-center gap-2 md:gap-10 sm:gap-3 md:text-sm flex-col sm:flex-row   mt-4'>
+      <div className='flex justify-center items-center gap-2 md:gap-10 sm:gap-3 md:text-sm flex-col sm:flex-row mt-4'>
         <Button gradientDuoTone='cyanToBlue' onClick={StartStream}>
           Make Call
         </Button>
@@ -102,7 +80,7 @@ function Home() {
         </Button>
         <Button gradientDuoTone='cyanToBlue'>Change Screen Size</Button>
       </div>
-      <div className='w-full   flex justify-center mt-4'>
+      <div className='w-full flex justify-center mt-4'>
         <div className='w-full max-w-2xl p-4 bg-white rounded-lg shadow-lg'>
           <video
             ref={localVideoRef}
@@ -128,7 +106,7 @@ function Home() {
       </Button>
       <ScreenShare stream={streamShare} />
       <GetDevices />
-      <VideoDeviceSelector stream={stream} />
+      <VideoDeviceSelector stream={stream} setStream={setStream} />
     </div>
   );
 }
