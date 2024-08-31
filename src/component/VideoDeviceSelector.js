@@ -6,10 +6,10 @@ function VideoDeviceSelector({stream}) {
   const [selectedDevice, setSelectedDevice] = useState('');
   const peerConnection = useRef(null);
   const socketRef = useRef(null);
-  useEffect(async () => {
+  useEffect(() => {
     socketRef.current = io('https://video-chat-6rs1.onrender.com');
     // Initialize RTCPeerConnection
-    peerConnection.current = await new RTCPeerConnection({
+    peerConnection.current = new RTCPeerConnection({
       iceServers: [
         {
           urls: [
@@ -19,7 +19,31 @@ function VideoDeviceSelector({stream}) {
         },
       ],
     });
-
+    // create offer
+    peerConnection.current
+      .createOffer()
+      .then((offer) => {
+        peerConnection.current.setLocalDescription(offer);
+        if (stream) {
+          stream.getTracks().forEach((track) => {
+            peerConnection.current.addTrack(track, stream);
+          });
+        }
+        console.log('Offer created:', offer);
+      })
+      .then(() => {
+        socketRef.current.emit(
+          'offer',
+          peerConnection.current.localDescription,
+        );
+      })
+      .catch((error) => console.error('Error creating offer:', error));
+    peerConnection.current.onicecandidate = handleICECandidate;
+    peerConnection.current.ontrack = handleTrack;
+    //scoket offer receive kiya
+    socketRef.current.on('offer', handleOffer);
+    socketRef.current.on('answer', handleAnswer);
+    socketRef.current.on('ice-candidate', handleNewICECandidate);
     navigator.mediaDevices
       .enumerateDevices()
       .then((deviceList) => {
@@ -61,39 +85,21 @@ function VideoDeviceSelector({stream}) {
         // Here you can handle the new stream, e.g., set it to a video element
       });
   };
+  const handleICECandidate = (event) => {
+    if (event.candidate) {
+      socketRef.current.emit('ice-candidate', event.candidate);
+    }
+  };
   // Set up event listeners for RTCPeerConnection
-  peerConnection.current.onicecandidate = handleICECandidate;
-  peerConnection.current.ontrack = handleTrack;
+
   const handleDeviceChange = (event) => {
     const deviceId = event.target.value;
     setSelectedDevice(deviceId);
     changeVideoInput(deviceId);
   };
 
-  const CreateOffer = async () => {
-    // create offer
-    peerConnection.current
-      .createOffer()
-      .then((offer) => {
-        peerConnection.current.setLocalDescription(offer);
-        if (stream) {
-          stream.getTracks().forEach((track) => {
-            peerConnection.current.addTrack(track, stream);
-          });
-        }
-        console.log('Offer created:', offer);
-      })
-      .then(() => {
-        socketRef.current.emit(
-          'offer',
-          peerConnection.current.localDescription,
-        );
-      })
-      .catch((error) => console.error('Error creating offer:', error));
-  };
+  const CreateOffer = async () => {};
 
-  //scoket offer receive kiya
-  socketRef.current.on('offer', handleOffer);
   const handleOffer = (offer) => {
     peerConnection.current
       .setRemoteDescription(new RTCSessionDescription(offer))
@@ -108,17 +114,10 @@ function VideoDeviceSelector({stream}) {
       .catch((error) => console.error('Error handling offer:', error));
   };
 
-  const handleICECandidate = (event) => {
-    if (event.candidate) {
-      socketRef.current.emit('ice-candidate', event.candidate);
-    }
-  };
-
   const handleTrack = (event) => {
     // Handle incoming tracks
   };
-  socketRef.current.on('answer', handleAnswer);
-  socketRef.current.on('ice-candidate', handleNewICECandidate);
+
   const handleAnswer = (answer) => {
     peerConnection.current
       .setRemoteDescription(new RTCSessionDescription(answer))
