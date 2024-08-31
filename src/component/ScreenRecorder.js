@@ -48,17 +48,14 @@ function ScreenRecorder({stream}) {
       });
       return;
     }
-    mediaRecorder.stop();
+
     mediaRecorder.onstop = () => {
-      console.log('Data collected:', mediaBlob.length); // Should log the number of recorded blobs
+      console.log('Data collected:', mediaBlob.length);
+      const completeBlob = new Blob(mediaBlob, {type: 'video/webm'});
+      const url = URL.createObjectURL(completeBlob);
+      setVideoUrl(url);
     };
-    // Creating a Blob from the collected blob data
-    const completeBlob = new Blob(mediaBlob, {type: 'video/webm '}); // Assuming you're recording video
-    const url = URL.createObjectURL(completeBlob);
-
-    // Creating a Blob from the collected blob data
-
-    setVideoUrl(url);
+    mediaRecorder.stop();
   };
 
   const PlayRecording = () => {
