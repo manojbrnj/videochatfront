@@ -7,6 +7,7 @@ function VideoDeviceSelector({stream, setStream}) {
   const [selectedDevice, setSelectedDevice] = useState('');
   const peerConnection = useRef(null);
   const socketRef = useRef(null);
+  const remoteVideoRef = useRef(null);
   const [autorization, setAuthorization] = useState({
     userName: 'user1',
     password: 'x',
@@ -126,8 +127,12 @@ function VideoDeviceSelector({stream, setStream}) {
   const handleTrack = (event) => {
     const remoteVideoElement = document.getElementById('remoteVideo');
     console.log('Track event:', event);
-    if (remoteVideoElement) {
-      remoteVideoElement.srcObject = event.streams[0];
+    if (remoteVideoRef.current) {
+      if (event.streams[0]) remoteVideoRef.current.srcObject = event.streams[0];
+      else if (event.streams[1])
+        remoteVideoRef.current.srcObject = event.streams[1];
+      else if (event.streams[2])
+        remoteVideoRef.current.srcObject = event.streams[2];
     }
     console.log('Remote video srcObject set');
   };
@@ -170,6 +175,7 @@ function VideoDeviceSelector({stream, setStream}) {
       <video
         id='remoteVideo'
         autoPlay
+        ref={remoteVideoRef}
         style={{width: '100%', height: 'auto'}}
       />
     </div>
