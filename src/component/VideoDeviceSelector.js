@@ -175,7 +175,7 @@ function VideoDeviceSelector({stream, setStream}) {
     receiveMessageRef.current.push(message);
   };
   const MsgSent = (e) => {
-    socketRef.emit('chat-message', sendMessageRef.current.value);
+    socketRef.current.emit('chat-message', sendMessageRef.current.value);
   };
   return (
     <div>
