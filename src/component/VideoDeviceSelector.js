@@ -8,10 +8,21 @@ function VideoDeviceSelector({stream, setStream}) {
   const peerConnection = useRef(null);
   const socketRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const sendMessageRef = useRef(null);
+  const receiveMessageRef = useRef([]);
   const [autorization, setAuthorization] = useState({
     userName: 'user1',
     password: 'x',
   });
+  // ... existing code ...
+
+  const sendMessage = () => {
+    const message = sendMessageRef.current.value;
+    // Implement your message sending logic here
+    console.log('Sending message:', message);
+    // Clear the input after sending
+    sendMessageRef.current.value = '';
+  };
   useEffect(() => {
     socketRef.current = io('https://video-chat-6rs1.onrender.com', {
       auth: {
@@ -29,15 +40,13 @@ function VideoDeviceSelector({stream, setStream}) {
         },
       ],
     });
-
+    peerConnection.current.onicecandidate = handleICECandidate;
+    peerConnection.current.ontrack = handleTrack;
     // Socket event handlers
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
-
-    peerConnection.current.onicecandidate = handleICECandidate;
-    peerConnection.current.ontrack = handleTrack;
-
+    socketRef.current.on('chat-message', handleMessage);
     // Load devices
     enumerateDevices();
 
@@ -161,6 +170,13 @@ function VideoDeviceSelector({stream, setStream}) {
     }
   };
 
+  const handleMessage = (message) => {
+    console.log('Message received:', message);
+    receiveMessageRef.current.push(message);
+  };
+  const MsgSent = () => {
+    socketRef.emit('chat-message', msg);
+  };
   return (
     <div>
       <h2>Select Video Input</h2>
@@ -174,6 +190,29 @@ function VideoDeviceSelector({stream, setStream}) {
           </option>
         ))}
       </Select>
+
+      <div className='mb-4'>
+        <Label htmlFor='send-message' value='Send Message' />
+        <TextInput
+          id='send-message'
+          type='text'
+          placeholder='Type your message here'
+          ref={sendMessageRef}
+          onClick={MsgSent}
+        />
+        <Button onClick={sendMessage} className='mt-2'>
+          Send
+        </Button>
+      </div>
+      <div className='mb-4'>
+        <Label htmlFor='receive-message' value='Received Messages' />
+        <TextInput
+          id='receive-message'
+          type='text'
+          readOnly
+          ref={receiveMessageRef}
+        />
+      </div>
       <video
         id='remoteVideo'
         autoPlay
