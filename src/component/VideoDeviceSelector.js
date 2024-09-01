@@ -46,7 +46,7 @@ function VideoDeviceSelector({stream, setStream}) {
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
-    socketRef.current.on('chat-message', handleMessage);
+
     // Load devices
     enumerateDevices();
 
@@ -150,10 +150,17 @@ function VideoDeviceSelector({stream, setStream}) {
 
   const handleAnswer = async (answer) => {
     try {
-      await peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(answer),
-      );
-      console.log('Answer received');
+      if (peerConnection.current.signalingState === 'have-local-offer') {
+        await peerConnection.current.setRemoteDescription(
+          new RTCSessionDescription(answer),
+        );
+        console.log('Answer received and set successfully');
+      } else {
+        console.log(
+          'Ignoring answer as signaling state is:',
+          peerConnection.current.signalingState,
+        );
+      }
     } catch (error) {
       console.error('Error handling answer:', error);
     }
@@ -176,6 +183,7 @@ function VideoDeviceSelector({stream, setStream}) {
   };
   const MsgSent = (e) => {
     socketRef.current.emit('chat-message', sendMessageRef.current.value);
+    socketRef.current.on('chat-message', handleMessage);
   };
   return (
     <div>
