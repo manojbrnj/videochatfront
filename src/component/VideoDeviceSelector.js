@@ -43,10 +43,11 @@ function VideoDeviceSelector({stream, setStream}) {
     peerConnection.current.onicecandidate = handleICECandidate;
     peerConnection.current.ontrack = handleTrack;
     // Socket event handlers
+
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
-
+    socketRef.current.on('chat-message', handleMessage);
     // Load devices
     enumerateDevices();
 
@@ -57,6 +58,7 @@ function VideoDeviceSelector({stream, setStream}) {
       socketRef.current.off('offer', handleOffer);
       socketRef.current.off('answer', handleAnswer);
       socketRef.current.off('ice-candidate', handleNewICECandidate);
+      socketRef.current.off('chat-message', handleMessage);
     };
   }, []);
 
@@ -183,7 +185,7 @@ function VideoDeviceSelector({stream, setStream}) {
   };
   const MsgSent = (e) => {
     socketRef.current.emit('chat-message', sendMessageRef.current.value);
-    socketRef.current.on('chat-message', handleMessage);
+    // socketRef.current.on('chat-message', handleMessage);
   };
   return (
     <div>
