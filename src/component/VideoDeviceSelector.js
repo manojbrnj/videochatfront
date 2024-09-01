@@ -88,13 +88,15 @@ function VideoDeviceSelector({stream, setStream}) {
   };
 
   const handleICECandidate = (event) => {
+    console.log('ICE candidate event:', event);
     if (event.candidate) {
-      console.log(event.candidate);
+      console.log('ICE candidate:', event.candidate);
       socketRef.current.emit('ice-candidate', event.candidate);
       console.log('ICE candidate sent');
+    } else {
+      console.log('ICE candidate gathering complete');
     }
   };
-
   const handleDeviceChange = (event) => {
     const deviceId = event.target.value;
     changeVideoInput(deviceId);
