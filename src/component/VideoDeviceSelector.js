@@ -7,10 +7,17 @@ function VideoDeviceSelector({stream, setStream}) {
   const [selectedDevice, setSelectedDevice] = useState('');
   const peerConnection = useRef(null);
   const socketRef = useRef(null);
-
+  const [autorization, setAuthorization] = useState({
+    userName: 'user1',
+    password: 'x',
+  });
   useEffect(() => {
-    socketRef.current = io('https://video-chat-6rs1.onrender.com');
-
+    socketRef.current = io('https://video-chat-6rs1.onrender.com', {
+      auth: {
+        userName: 'abcd',
+        password: 'x',
+      },
+    });
     peerConnection.current = new RTCPeerConnection({
       iceServers: [
         {
@@ -22,22 +29,24 @@ function VideoDeviceSelector({stream, setStream}) {
       ],
     });
 
-    peerConnection.current.onicecandidate = handleICECandidate;
-    peerConnection.current.ontrack = handleTrack;
-
+    // Socket event handlers
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
 
+    peerConnection.current.onicecandidate = handleICECandidate;
+    peerConnection.current.ontrack = handleTrack;
+
+    // Load devices
     enumerateDevices();
 
     return () => {
-      if (peerConnection.current) {
-        peerConnection.current.close();
-      }
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      // Cleanup after component unmount
+      peerConnection.current.close();
+      socketRef.current.disconnect();
+      socketRef.current.off('offer', handleOffer);
+      socketRef.current.off('answer', handleAnswer);
+      socketRef.current.off('ice-candidate', handleNewICECandidate);
     };
   }, []);
 
@@ -66,12 +75,11 @@ function VideoDeviceSelector({stream, setStream}) {
         video: {deviceId: deviceId},
       });
 
-      setStream(newStream);
       newStream.getTracks().forEach((track) => {
         peerConnection.current.addTrack(track, newStream);
       });
 
-      // Update selected device
+      setStream(newStream);
       setSelectedDevice(deviceId);
     } catch (error) {
       console.error('Error changing video input:', error);
@@ -80,7 +88,9 @@ function VideoDeviceSelector({stream, setStream}) {
 
   const handleICECandidate = (event) => {
     if (event.candidate) {
+      console.log(event.candidate);
       socketRef.current.emit('ice-candidate', event.candidate);
+      console.log('ICE candidate sent');
     }
   };
 
@@ -104,6 +114,7 @@ function VideoDeviceSelector({stream, setStream}) {
       await peerConnection.current.setRemoteDescription(
         new RTCSessionDescription(offer),
       );
+      console.log('Offer received');
       const answer = await peerConnection.current.createAnswer();
       await peerConnection.current.setLocalDescription(answer);
       socketRef.current.emit('answer', peerConnection.current.localDescription);
@@ -113,11 +124,12 @@ function VideoDeviceSelector({stream, setStream}) {
   };
 
   const handleTrack = (event) => {
-    // Here you can attach the incoming video track to a video element to show the stream
     const remoteVideoElement = document.getElementById('remoteVideo');
+    console.log('Track event:', event);
     if (remoteVideoElement) {
       remoteVideoElement.srcObject = event.streams[0];
     }
+    console.log('Remote video srcObject set');
   };
 
   const handleAnswer = async (answer) => {
@@ -125,6 +137,7 @@ function VideoDeviceSelector({stream, setStream}) {
       await peerConnection.current.setRemoteDescription(
         new RTCSessionDescription(answer),
       );
+      console.log('Answer received');
     } catch (error) {
       console.error('Error handling answer:', error);
     }
@@ -135,6 +148,7 @@ function VideoDeviceSelector({stream, setStream}) {
       await peerConnection.current.addIceCandidate(
         new RTCIceCandidate(candidate),
       );
+      console.log('ICE candidate received');
     } catch (error) {
       console.error('Error adding ICE candidate:', error);
     }
@@ -143,7 +157,9 @@ function VideoDeviceSelector({stream, setStream}) {
   return (
     <div>
       <h2>Select Video Input</h2>
-      <Button onClick={CreateOffer}>Create Offer</Button>
+      <Button onClick={CreateOffer} disabled={!stream}>
+        Create Offer
+      </Button>
       <Select value={selectedDevice} onChange={handleDeviceChange}>
         {devices.map((device) => (
           <option key={device.deviceId} value={device.deviceId}>
