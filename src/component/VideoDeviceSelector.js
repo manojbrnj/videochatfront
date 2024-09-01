@@ -16,6 +16,7 @@ function VideoDeviceSelector({stream, setStream}) {
   });
   // ... existing code ...
   const [messages, setMessages] = useState([]);
+  const [rcvmessages, setRcvMessages] = useState([]);
   const sendMessage = () => {
     const message = sendMessageRef.current.value;
     // Implement your message sending logic here
@@ -179,9 +180,9 @@ function VideoDeviceSelector({stream, setStream}) {
     }
   };
 
-  const handleMessage = (message) => {
-    console.log('Message received:', message);
-    setMessages((prevMessages) => [...prevMessages, message]);
+  const handleMessage = (messagex) => {
+    console.log('Message received:', messagex);
+    setRcvMessages((prevMessages) => [...prevMessages, messagex]);
   };
   const MsgSent = (e) => {
     socketRef.current.emit('chat-message', sendMessageRef.current.value);
@@ -208,18 +209,18 @@ function VideoDeviceSelector({stream, setStream}) {
           type='text'
           placeholder='Type your message here'
           ref={sendMessageRef}
-          onClick={MsgSent}
+          onChange={(e) => {
+            setMessages((prevMessages) => [...prevMessages, e.target.value]);
+          }}
         />
-        <Button onClick={sendMessage} className='mt-2'>
+        <Button onClick={MsgSent} className='mt-2'>
           Send
         </Button>
       </div>
       <div className='mb-4'>
         <Label htmlFor='receive-message' value='Received Messages' />
         <div id='receive-message'>
-          {messages.map((msg, index) => (
-            <p key={index}>{msg}</p>
-          ))}
+          <p>{rcvmessages}</p>
         </div>
       </div>
       <video
