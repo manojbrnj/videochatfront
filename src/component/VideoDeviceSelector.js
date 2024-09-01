@@ -182,6 +182,7 @@ function VideoDeviceSelector({stream, setStream}) {
 
   const handleMessage = (messagex) => {
     console.log('Message received:', messagex);
+    setRcvMessages((prevMessages) => [...prevMessages, '']);
     setRcvMessages((prevMessages) => [...prevMessages, messagex]);
   };
   const MsgSent = (e) => {
