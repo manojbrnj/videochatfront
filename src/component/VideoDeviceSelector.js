@@ -15,7 +15,7 @@ function VideoDeviceSelector({stream, setStream}) {
     password: 'x',
   });
   // ... existing code ...
-
+  const [messages, setMessages] = useState([]);
   const sendMessage = () => {
     const message = sendMessageRef.current.value;
     // Implement your message sending logic here
@@ -43,11 +43,11 @@ function VideoDeviceSelector({stream, setStream}) {
     peerConnection.current.onicecandidate = handleICECandidate;
     peerConnection.current.ontrack = handleTrack;
     // Socket event handlers
-
+    socketRef.current.on('chat-message', handleMessage);
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
-    socketRef.current.on('chat-message', handleMessage);
+
     // Load devices
     enumerateDevices();
 
@@ -137,7 +137,7 @@ function VideoDeviceSelector({stream, setStream}) {
     }
   };
 
-  const handleTrack = (event) => {
+  const handleTrack = async (event) => {
     const remoteVideoElement = document.getElementById('remoteVideo');
     console.log('Track event:', event);
     if (remoteVideoRef.current) {
@@ -181,11 +181,11 @@ function VideoDeviceSelector({stream, setStream}) {
 
   const handleMessage = (message) => {
     console.log('Message received:', message);
-    receiveMessageRef.current.push(message);
+    setMessages((prevMessages) => [...prevMessages, message]);
   };
   const MsgSent = (e) => {
     socketRef.current.emit('chat-message', sendMessageRef.current.value);
-    // socketRef.current.on('chat-message', handleMessage);
+    sendMessageRef.current.value = ''; // Message send hone ke baad input field clear kar do
   };
   return (
     <div>
@@ -216,12 +216,11 @@ function VideoDeviceSelector({stream, setStream}) {
       </div>
       <div className='mb-4'>
         <Label htmlFor='receive-message' value='Received Messages' />
-        <TextInput
-          id='receive-message'
-          type='text'
-          readOnly
-          ref={receiveMessageRef}
-        />
+        <div id='receive-message'>
+          {messages.map((msg, index) => (
+            <p key={index}>{msg}</p>
+          ))}
+        </div>
       </div>
       <video
         id='remoteVideo'
