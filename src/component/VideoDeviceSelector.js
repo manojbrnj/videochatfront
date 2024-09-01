@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef, useCallback} from 'react';
-import {Button, Select} from 'flowbite-react';
+import {Button, Select, Label, TextInput} from 'flowbite-react';
 import io from 'socket.io-client';
 
 function VideoDeviceSelector({stream, setStream}) {
