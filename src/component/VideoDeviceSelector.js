@@ -131,7 +131,10 @@ function VideoDeviceSelector({stream, setStream}) {
     try {
       const offer = await peerConnection.current.createOffer();
 
-      const newStream = await navigator.mediaDevices.getUserMedia();
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
 
       newStream.getTracks().forEach((track) => {
         peerConnection.current.addTrack(track, newStream);
