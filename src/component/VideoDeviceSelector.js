@@ -130,9 +130,22 @@ function VideoDeviceSelector({stream, setStream}) {
   const CreateOffer = async () => {
     try {
       const offer = await peerConnection.current.createOffer();
-      peerConnection.current.tracks.forEach((track) => {
-        peerConnection.current.addTrack(track);
+
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {deviceId: deviceId},
       });
+
+      newStream.getTracks().forEach((track) => {
+        peerConnection.current.addTrack(track, newStream);
+      });
+
+      setStream(newStream);
+      setSelectedDevice(deviceId);
+      if (offer.type === 'offer') {
+        console.log('Offer created', offer);
+      } else {
+        console.error('Invalid offer type:', offer.type);
+      }
       await peerConnection.current.setLocalDescription(offer);
       socketRef.current.emit('offer', peerConnection.current.localDescription);
     } catch (error) {
