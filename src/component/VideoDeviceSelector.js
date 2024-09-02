@@ -102,7 +102,7 @@ function VideoDeviceSelector({stream, setStream}) {
     }
   };
 
-  const handleICECandidate = async (event) => {
+  const handleICECandidate = (event) => {
     console.log('ICE candidate event:', event);
     if (event.candidate) {
       console.log('ICE candidate:', event.candidate);
