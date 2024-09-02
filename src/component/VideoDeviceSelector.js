@@ -96,7 +96,7 @@ function VideoDeviceSelector({stream, setStream}) {
       });
 
       setStream(newStream);
-      setSelectedDevice(deviceId);
+      //  setSelectedDevice(deviceId);
     } catch (error) {
       console.error('Error changing video input:', error);
     }
@@ -131,9 +131,7 @@ function VideoDeviceSelector({stream, setStream}) {
     try {
       const offer = await peerConnection.current.createOffer();
 
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: {deviceId: deviceId},
-      });
+      const newStream = await navigator.mediaDevices.getUserMedia();
 
       newStream.getTracks().forEach((track) => {
         peerConnection.current.addTrack(track, newStream);
