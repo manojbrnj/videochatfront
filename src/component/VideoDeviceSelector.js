@@ -130,16 +130,9 @@ function VideoDeviceSelector({stream, setStream}) {
   const CreateOffer = async () => {
     try {
       const offer = await peerConnection.current.createOffer();
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: {deviceId: deviceId},
-        });
-  
-        newStream.getTracks().forEach((track) => {
-          peerConnection.current.addTrack(track, newStream);
-        });
-  
-        setStream(newStream);
+      peerConnection.current.tracks.forEach((track) => {
+        peerConnection.current.addTrack(track);
+      });
       await peerConnection.current.setLocalDescription(offer);
       socketRef.current.emit('offer', peerConnection.current.localDescription);
     } catch (error) {
@@ -152,7 +145,7 @@ function VideoDeviceSelector({stream, setStream}) {
       await peerConnection.current.setRemoteDescription(
         new RTCSessionDescription(offer),
       );
-      console.log('Offer received');
+      console.log('Offer received', offer);
       const answer = await peerConnection.current.createAnswer();
       await peerConnection.current.setLocalDescription(answer);
       socketRef.current.emit('answer', peerConnection.current.localDescription);
