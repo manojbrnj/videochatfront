@@ -43,8 +43,10 @@ function VideoDeviceSelector({stream, setStream}) {
     });
     peerConnection.current.onicecandidate = handleICECandidate;
     peerConnection.current.ontrack = handleTrack;
+
     // Socket event handlers
     socketRef.current.on('chat-message', handleMessage);
+    socketRef.current.on('new-track', handleNewTrack);
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
     socketRef.current.on('ice-candidate', handleNewICECandidate);
@@ -56,6 +58,7 @@ function VideoDeviceSelector({stream, setStream}) {
       // Cleanup after component unmount
       peerConnection.current.close();
       socketRef.current.disconnect();
+      socketRef.current.off('new-track', handleNewTrack);
       socketRef.current.off('offer', handleOffer);
       socketRef.current.off('answer', handleAnswer);
       socketRef.current.off('ice-candidate', handleNewICECandidate);
@@ -99,7 +102,7 @@ function VideoDeviceSelector({stream, setStream}) {
     }
   };
 
-  const handleICECandidate = (event) => {
+  const handleICECandidate = async (event) => {
     console.log('ICE candidate event:', event);
     if (event.candidate) {
       console.log('ICE candidate:', event.candidate);
@@ -109,7 +112,17 @@ function VideoDeviceSelector({stream, setStream}) {
       console.log('ICE candidate gathering complete');
     }
   };
-  const handleDeviceChange = (event) => {
+  const handleNewICECandidate = async (candidate) => {
+    try {
+      await peerConnection.current.addIceCandidate(
+        new RTCIceCandidate(candidate),
+      );
+      console.log('ICE candidate received');
+    } catch (error) {
+      console.error('Error adding ICE candidate:', error);
+    }
+  };
+  const handleDeviceChange = async (event) => {
     const deviceId = event.target.value;
     changeVideoInput(deviceId);
   };
@@ -117,6 +130,16 @@ function VideoDeviceSelector({stream, setStream}) {
   const CreateOffer = async () => {
     try {
       const offer = await peerConnection.current.createOffer();
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: {deviceId: deviceId},
+        });
+  
+        newStream.getTracks().forEach((track) => {
+          peerConnection.current.addTrack(track, newStream);
+        });
+  
+        setStream(newStream);
       await peerConnection.current.setLocalDescription(offer);
       socketRef.current.emit('offer', peerConnection.current.localDescription);
     } catch (error) {
@@ -139,8 +162,8 @@ function VideoDeviceSelector({stream, setStream}) {
   };
 
   const handleTrack = async (event) => {
-    const remoteVideoElement = document.getElementById('remoteVideo');
     console.log('Track event:', event);
+
     if (remoteVideoRef.current) {
       if (event.streams[0]) remoteVideoRef.current.srcObject = event.streams[0];
       else if (event.streams[1])
@@ -148,7 +171,17 @@ function VideoDeviceSelector({stream, setStream}) {
       else if (event.streams[2])
         remoteVideoRef.current.srcObject = event.streams[2];
     }
+
     console.log('Remote video srcObject set');
+
+    // Send track information to client two
+    const trackInfo = {
+      id: event.track.id,
+      kind: event.track.kind,
+      label: event.track.label,
+    };
+
+    socketRef.current.emit('new-track', trackInfo);
   };
 
   const handleAnswer = async (answer) => {
@@ -169,18 +202,7 @@ function VideoDeviceSelector({stream, setStream}) {
     }
   };
 
-  const handleNewICECandidate = async (candidate) => {
-    try {
-      await peerConnection.current.addIceCandidate(
-        new RTCIceCandidate(candidate),
-      );
-      console.log('ICE candidate received');
-    } catch (error) {
-      console.error('Error adding ICE candidate:', error);
-    }
-  };
-
-  const handleMessage = (messagex) => {
+  const handleMessage = async (messagex) => {
     console.log('Message received:', messagex);
     setRcvMessages((prevMessages) => [...prevMessages, '']);
     setRcvMessages((prevMessages) => [...prevMessages, messagex]);
@@ -188,6 +210,28 @@ function VideoDeviceSelector({stream, setStream}) {
   const MsgSent = (e) => {
     socketRef.current.emit('chat-message', sendMessageRef.current.value);
     sendMessageRef.current.value = ''; // Message send hone ke baad input field clear kar do
+  };
+  const handleNewTrack = (trackInfo) => {
+    console.log('New track received:', trackInfo);
+
+    // Create a new MediaStreamTrack from the received track info
+    const newTrack = new MediaStreamTrack({
+      kind: trackInfo.kind,
+      id: trackInfo.id,
+      label: trackInfo.label,
+    });
+
+    // Add the new track to the peer connection
+    peerConnection.current.addTrack(newTrack);
+
+    // If you want to display the new track immediately, you can add it to the remote video
+    if (remoteVideoRef.current) {
+      const stream = remoteVideoRef.current.srcObject || new MediaStream();
+      stream.addTrack(newTrack);
+      remoteVideoRef.current.srcObject = stream;
+    }
+
+    console.log('New track added to peer connection and remote video');
   };
   return (
     <div>
@@ -228,7 +272,7 @@ function VideoDeviceSelector({stream, setStream}) {
         id='remoteVideo'
         autoPlay
         ref={remoteVideoRef}
-        style={{width: '100%', height: 'auto'}}
+        style={{width: '100%', height: 'auto', background: 'black'}}
       />
     </div>
   );
