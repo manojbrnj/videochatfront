@@ -127,20 +127,22 @@ function VideoDeviceSelector({stream, setStream}) {
     changeVideoInput(deviceId);
   };
 
+  const VideoCall = async () => {
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+
+    newStream.getTracks().forEach((track) => {
+      peerConnection.current.addTrack(track, newStream);
+    });
+
+    setStream(newStream);
+  };
   const CreateOffer = async () => {
     try {
       const offer = await peerConnection.current.createOffer();
 
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-
-      newStream.getTracks().forEach((track) => {
-        peerConnection.current.addTrack(track, newStream);
-      });
-
-      setStream(newStream);
       // setSelectedDevice(deviceId);
       if (offer.type === 'offer') {
         console.log('Offer created', offer);
@@ -267,6 +269,9 @@ function VideoDeviceSelector({stream, setStream}) {
         />
         <Button onClick={MsgSent} className='mt-2'>
           Send
+        </Button>
+        <Button onClick={VideoCall} className='mt-2'>
+          VideoCall
         </Button>
       </div>
       <div className='mb-4'>
