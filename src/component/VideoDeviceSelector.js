@@ -47,9 +47,9 @@ function VideoDeviceSelector({stream, setStream}) {
     // Socket event handlers
     socketRef.current.on('chat-message', handleMessage);
     socketRef.current.on('new-track', handleNewTrack);
+    socketRef.current.on('ice-candidate', handleNewICECandidate);
     socketRef.current.on('offer', handleOffer);
     socketRef.current.on('answer', handleAnswer);
-    socketRef.current.on('ice-candidate', handleNewICECandidate);
 
     // Load devices
     enumerateDevices();
