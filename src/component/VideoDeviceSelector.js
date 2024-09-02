@@ -127,20 +127,19 @@ function VideoDeviceSelector({stream, setStream}) {
     changeVideoInput(deviceId);
   };
 
-  const VideoCall = async () => {
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-
-    newStream.getTracks().forEach((track) => {
-      peerConnection.current.addTrack(track, newStream);
-    });
-
-    setStream(newStream);
-  };
+  const VideoCall = async () => {};
   const CreateOffer = async () => {
     try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+      newStream.getTracks().forEach((track) => {
+        peerConnection.current.addTrack(track, newStream);
+      });
+
+      setStream(newStream);
       const offer = await peerConnection.current.createOffer();
 
       // setSelectedDevice(deviceId);
