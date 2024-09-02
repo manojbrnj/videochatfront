@@ -140,7 +140,7 @@ function VideoDeviceSelector({stream, setStream}) {
       });
 
       setStream(newStream);
-      setSelectedDevice(deviceId);
+      // setSelectedDevice(deviceId);
       if (offer.type === 'offer') {
         console.log('Offer created', offer);
       } else {
